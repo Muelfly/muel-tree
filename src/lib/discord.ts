@@ -1,4 +1,5 @@
 import { DiscordSDK } from "@discord/embedded-app-sdk";
+import { appFetch } from "@/lib/app-fetch";
 
 export type DiscordUser = {
   id: string;
@@ -36,7 +37,7 @@ export async function initDiscord(): Promise<DiscordSession | null> {
       scope: ["identify"],
     });
 
-    const res = await fetch("/api/discord/token", {
+    const res = await appFetch("/api/discord/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),

@@ -1,21 +1,33 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState, useRef, useCallback } from "react";
-import type { WeaveNode, WeaveEdge } from "@/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { WeaveEdge, WeaveNode } from "@/types";
+import { appFetch, toErrorMessage } from "@/lib/app-fetch";
 import { initDiscord, type DiscordUser } from "@/lib/discord";
 
 const TAG_PALETTE = [
-  "#f472b6", "#a78bfa", "#60a5fa", "#34d399",
-  "#fbbf24", "#fb923c", "#f87171", "#38bdf8",
-  "#818cf8", "#6ee7b7", "#c4b5fd", "#e879f9",
+  "#f472b6",
+  "#a78bfa",
+  "#60a5fa",
+  "#34d399",
+  "#fbbf24",
+  "#fb923c",
+  "#f87171",
+  "#38bdf8",
+  "#818cf8",
+  "#6ee7b7",
+  "#c4b5fd",
+  "#e879f9",
 ];
+
 function tagColor(tag?: string): string {
   if (!tag) return "#818cf8";
   let hash = 0;
   for (const c of tag) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
   return TAG_PALETTE[hash % TAG_PALETTE.length];
 }
+
 function emotionRadius(emotions?: string[]): number {
   const count = Math.min(Math.max(emotions?.length ?? 1, 1), 4);
   return 0.7 + (count - 1) * 0.233;
@@ -48,30 +60,32 @@ export default function WeavePage() {
   const [error, setError] = useState<string | null>(null);
   const [newNodeIds, setNewNodeIds] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<WeaveNode | null>(null);
-
   const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
-
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const newNodeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const newNodeTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    appFetch("/api/dreams")
+      .then((r) => r.json())
+      .then(({ nodes, edges, error }) => {
+        if (error) {
+          setError(error);
+        } else {
+          setNodes(nodes ?? []);
+          setEdges(edges ?? []);
+        }
+      })
+      .catch((e) => setError(toErrorMessage(e)))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     initDiscord().then((session) => {
       if (session?.user) setDiscordUser(session.user);
     });
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/dreams")
-      .then((r) => r.json())
-      .then(({ nodes, edges, error }) => {
-        if (error) setError(error);
-        else { setNodes(nodes ?? []); setEdges(edges ?? []); }
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
   }, []);
 
   const submit = useCallback(async () => {
@@ -82,21 +96,25 @@ export default function WeavePage() {
     setSubmitError(null);
 
     try {
-      const res = await fetch("/api/dreams/submit", {
+      const res = await appFetch("/api/dreams/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, visibility: "anonymous" }),
       });
       const data = await res.json();
-      if (!res.ok) { setSubmitError(data.error ?? "제출 실패"); return; }
+      if (!res.ok) {
+        setSubmitError(data.error ?? "Submit failed");
+        return;
+      }
 
       const { dream, extracted } = data;
-
       const newNode: WeaveNode = {
         id: dream.id,
         label: content.slice(0, 40),
         ...randomSpawn(),
-        vx: 0, vy: 0, vz: 0,
+        vx: 0,
+        vy: 0,
+        vz: 0,
         color: tagColor(extracted?.main_tag),
         radius: emotionRadius(extracted?.emotions),
         emotion: extracted?.emotions?.[0],
@@ -116,7 +134,7 @@ export default function WeavePage() {
         });
       }, 2500);
     } catch (e) {
-      setSubmitError(String(e));
+      setSubmitError(toErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -124,7 +142,10 @@ export default function WeavePage() {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submit();
+      }
     },
     [submit]
   );
@@ -140,7 +161,7 @@ export default function WeavePage() {
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-          <p className="text-gray-600 text-sm">꿈을 불러오는 중…</p>
+          <p className="text-gray-600 text-sm">Loading dreams...</p>
         </div>
       )}
 
@@ -150,26 +171,32 @@ export default function WeavePage() {
         </div>
       )}
 
-      {/* 클릭한 노드 정보 */}
       {selectedNode && (
         <div
           className="absolute top-6 left-6 z-20 max-w-xs bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-4 cursor-pointer"
           onClick={() => setSelectedNode(null)}
         >
-          <p className="text-white/80 text-sm leading-relaxed">{selectedNode.label}</p>
+          <p className="text-white/80 text-sm leading-relaxed">
+            {selectedNode.label}
+          </p>
           {selectedNode.emotion && (
-            <p className="text-white/40 text-xs mt-1">{selectedNode.emotion}</p>
+            <p className="text-white/40 text-xs mt-1">
+              {selectedNode.emotion}
+            </p>
           )}
           {selectedNode.keywords && selectedNode.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {selectedNode.keywords.map((k) => (
-                <span key={k} className="text-white/30 text-[10px] border border-white/10 px-2 py-0.5 rounded-full">
+                <span
+                  key={k}
+                  className="text-white/30 text-[10px] border border-white/10 px-2 py-0.5 rounded-full"
+                >
                   {k}
                 </span>
               ))}
             </div>
           )}
-          <p className="text-white/20 text-[10px] mt-3">클릭하여 닫기</p>
+          <p className="text-white/20 text-[10px] mt-3">Click to close</p>
         </div>
       )}
 
@@ -190,7 +217,6 @@ export default function WeavePage() {
         {nodes.length > 0 ? `${nodes.length} dreams connected` : ""}
       </p>
 
-      {/* 꿈 입력 */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-lg px-4 z-20">
         <div className="bg-black/50 backdrop-blur-md border border-white/[0.08] rounded-2xl p-4 shadow-xl">
           <textarea
@@ -202,21 +228,25 @@ export default function WeavePage() {
               e.target.style.height = `${e.target.scrollHeight}px`;
             }}
             onKeyDown={handleKeyDown}
-            placeholder="오늘 꿈을 기록해줘…"
+            placeholder="Write a dream..."
             rows={2}
             disabled={submitting}
             className="w-full bg-transparent text-white/90 text-sm placeholder:text-white/20 resize-none outline-none leading-relaxed min-h-[2.5rem] max-h-40 overflow-y-auto"
           />
           <div className="flex items-center justify-between mt-3">
-            <p className="text-red-400/80 text-xs min-h-[1rem]">{submitError ?? ""}</p>
+            <p className="text-red-400/80 text-xs min-h-[1rem]">
+              {submitError ?? ""}
+            </p>
             <div className="flex items-center gap-3">
-              <span className="text-white/15 text-xs">{submitting ? "" : "Enter ↵"}</span>
+              <span className="text-white/15 text-xs">
+                {submitting ? "" : "Enter"}
+              </span>
               <button
                 onClick={submit}
                 disabled={!text.trim() || submitting}
                 className="px-4 py-1.5 bg-indigo-500/70 hover:bg-indigo-400/70 disabled:opacity-30 disabled:cursor-not-allowed text-white text-xs rounded-lg transition-colors"
               >
-                {submitting ? "AI 분석 중…" : "기록"}
+                {submitting ? "Analyzing..." : "Save"}
               </button>
             </div>
           </div>

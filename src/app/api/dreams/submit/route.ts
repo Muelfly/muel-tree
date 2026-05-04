@@ -68,7 +68,8 @@ async function embedDream(content: string): Promise<number[]> {
     model: "gemini-embedding-001",
   });
   const embeddingResult = await embeddingModel.embedContent(content);
-  return Array.from(embeddingResult.embedding.values);
+  // Explicitly coerce each value with Number() to handle Float32Array at runtime
+  return Array.from(embeddingResult.embedding.values, Number);
 }
 
 export async function POST(req: NextRequest) {
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
       emotions: extracted.emotions,
       keywords: extracted.keywords,
       main_tag: extracted.main_tag,
-      embedding,
+      embedding: `[${embedding.join(',')}]`,
       visibility: body.visibility ?? "anonymous",
     })
     .select("id, content, emotions, keywords, main_tag, visibility, created_at")
