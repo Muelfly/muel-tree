@@ -1,21 +1,19 @@
-# Muel Web App
+# Muel
 
-`muel-tree` is the Vercel-hosted web app for the Muel Platform.
+`muel-tree` is the Vercel-hosted landing page and Activity surface for Muel.
 
-## Terms
+## Landing Terms
 
-- **Muel Platform**: the overall brand and product system.
-- **Muel Web App**: this repository, deployed on Vercel.
-- **Hub**: `/`, the public landing page and product list.
-- **Activity**: a Discord Activity route inside this app, such as `/weave`.
-- **Mini App**: a Toss App in Toss service that can point to a matching product experience.
-- **Product**: an individual service such as Muel, Black or White, or 세계수.
-- **Muel Discord Bot**: the separate `muel-bot` repository, deployed on Render.
+- **Muel** — Bot
+- **Gomdori** — Game
+- **Weave** — App
+- **Server** — Discord
+- **Team** — updates and public-facing notices
 
 ## Current Routes
 
-- `/` — Hub
-- `/weave` — 세계수 Activity
+- `/` — Muel landing page
+- `/weave` — Weave
 - `/force` — force-layout test surface
 - `/payment/success`, `/payment/fail` — Toss Payments return pages
 - `/api/dreams` — read 세계수 graph data
@@ -24,7 +22,7 @@
 
 ## Product Registry
 
-Product labels and routes live in `src/config/apps.ts`. Add new products there first, then add the matching route.
+Landing labels live in `src/config/apps.ts`. Keep public names aligned with the landing page before adding routes or bot commands.
 
 ## Deployments
 

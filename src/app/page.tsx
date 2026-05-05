@@ -1,126 +1,155 @@
 import Link from "next/link";
-import { muelProducts, platformTerms } from "@/config/apps";
 import { Nav } from "@/components/Nav";
 
-const cardColors = ["bg-[#fff2b8]", "bg-[#ffe4dd]", "bg-[#dcf8ff]", "bg-[#f1f1ec]"];
+const news = [
+  { date: "2025년 5월", category: "Muel", text: "Muel 챗봇 소개 준비 중", href: "#" },
+  { date: "2025년 4월", category: "Gomdori", text: "Gomdori 기획 중", href: "#" },
+  { date: "2025년 3월", category: "Weave", text: "Weave 베타 공개", href: "#" },
+];
 
-function Arrow() {
-  return <span aria-hidden="true">-&gt;</span>;
+function Badge({ children, light }: { children: React.ReactNode; light?: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-4 py-1 text-xs font-semibold uppercase tracking-widest ${
+        light ? "border-ink/30 text-ink/60" : "border-white/30 text-white/60"
+      }`}
+    >
+      {children}
+    </span>
+  );
 }
 
 export default function Home() {
   return (
     <>
       <Nav />
-      <main className="bg-white pt-16 text-ink">
-        <section className="px-5 py-10 sm:px-8 lg:px-12">
-          <div className="mx-auto grid max-w-6xl gap-8 rounded-[28px] bg-cream px-6 py-10 sm:px-10 lg:grid-cols-[1fr_420px] lg:items-center lg:px-14 lg:py-14">
-            <div>
-              <p className="mb-5 text-sm font-semibold text-ink/55">
-                {platformTerms.platform}
-              </p>
-              <h1 className="text-6xl font-bold leading-none sm:text-7xl">
-                Muel
-              </h1>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-ink/62">
-                Discord 챗봇을 중심으로, 게임과 작은 Activity들을 함께 운영하는
-                고닥 커뮤니티 프로젝트입니다.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a
-                  href="#products"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white transition hover:bg-ink/85"
-                >
-                  프로젝트 보기 <Arrow />
-                </a>
-                <Link
-                  href="/weave"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
-                >
-                  세계수 체험 <Arrow />
-                </Link>
-              </div>
-            </div>
 
-            <div className="rounded-[26px] bg-white p-5 shadow-[0_24px_70px_rgba(30,37,50,0.12)]">
-              <div className="rounded-[22px] bg-sky p-5">
-                <div className="mb-16 flex items-center justify-between">
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-ink/55">
-                    MUEL WEB APP
-                  </span>
-                  <span className="h-10 w-10 rounded-full bg-sun" />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <span className="h-28 rounded-[20px] bg-white" />
-                  <span className="h-28 rounded-[20px] bg-coral" />
-                  <span className="h-28 rounded-[20px] bg-mint" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+      <section
+        id="muel"
+        className="flex min-h-[680px] flex-col items-center justify-center bg-gradient-to-br from-[#a2e61d] to-[#ffde90] px-6 pb-24 pt-32 text-center text-ink"
+      >
+        <Badge light>Bot</Badge>
+        <h1 className="mt-6 text-7xl font-bold leading-none sm:text-9xl">
+          Muel
+        </h1>
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
+          <Link
+            href="#"
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white transition hover:bg-ink/80"
+          >
+            초대하기 -&gt;
+          </Link>
+          <Link
+            href="#team"
+            className="inline-flex h-12 items-center gap-2 rounded-full border border-ink/30 px-6 text-sm font-semibold text-ink transition hover:bg-ink/5"
+          >
+            자세히 알아보기 -&gt;
+          </Link>
+        </div>
+      </section>
 
-        <section id="products" className="px-5 py-10 sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-6xl">
-            <p className="text-sm font-semibold text-ink/45">PRODUCTS</p>
-            <h2 className="mt-2 text-4xl font-bold">Muel에서 시작되는 것들</h2>
-            <div className="mt-6 grid gap-4 lg:grid-cols-4">
-              {muelProducts.map((product, index) => (
-                <Link
-                  key={product.slug}
-                  href={product.route}
-                  className={`${cardColors[index % cardColors.length]} group flex min-h-[320px] flex-col justify-between rounded-[26px] p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(30,37,50,0.12)]`}
-                >
-                  <div>
-                    <div className="mb-5 flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold text-ink/45">
-                        {product.kind}
-                      </p>
-                      <span className="rounded-full bg-white/75 px-3 py-1 text-[11px] font-semibold uppercase text-ink/50">
-                        {product.status}
-                      </span>
-                    </div>
-                    <h3 className="text-3xl font-bold leading-tight">
-                      {product.name}
-                    </h3>
-                    <p className="mt-4 text-sm leading-7 text-ink/58">
-                      {product.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">{product.cta}</span>
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white transition group-hover:translate-x-1">
-                      <Arrow />
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+      <section
+        id="gomdori"
+        className="flex min-h-[680px] flex-col items-center justify-center bg-[#0a0a0a] px-6 py-24 text-center text-white"
+      >
+        <Badge>Game</Badge>
+        <h2 className="mt-6 text-7xl font-bold leading-none sm:text-9xl">
+          Gomdori
+        </h2>
+        <div className="mt-10">
+          <span className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-sm font-semibold text-white/35">
+            준비 중
+          </span>
+        </div>
+      </section>
 
-        <section id="premium-blog" className="px-5 pb-16 pt-8 sm:px-8 lg:px-12">
-          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-[26px] bg-ink p-7 text-white">
-              <p className="text-sm font-semibold text-white/45">TERMS</p>
-              <h2 className="mt-4 text-4xl font-bold">용어 기준</h2>
-              <p className="mt-4 text-sm leading-7 text-white/58">
-                `muel-tree`는 {platformTerms.webApp}, `muel-bot`은{" "}
-                {platformTerms.bot}입니다. 새 기능은 새 인프라가 아니라
-                Product와 Activity 라우트로 추가합니다.
-              </p>
-            </div>
-            <div className="divide-y divide-ink/10 border-y border-ink/10">
-              {Object.entries(platformTerms).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between gap-4 py-5">
-                  <span className="text-lg font-semibold">{value}</span>
-                  <span className="text-sm text-ink/45">{key}</span>
+      <section
+        id="weave"
+        className="flex min-h-[680px] flex-col items-center justify-center bg-gradient-to-br from-[#5B21B6] to-[#DB2777] px-6 py-24 text-center text-white"
+      >
+        <Badge>App</Badge>
+        <h2 className="mt-6 text-7xl font-bold leading-none sm:text-9xl">
+          Weave
+        </h2>
+        <div className="mt-10">
+          <Link
+            href="/weave"
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-ink transition hover:bg-white/85"
+          >
+            체험하기 -&gt;
+          </Link>
+        </div>
+      </section>
+
+      <section
+        id="server"
+        className="flex min-h-[420px] flex-col items-center justify-center bg-[#1e2433] px-8 py-20 text-center text-white"
+      >
+        <Badge>Discord</Badge>
+        <h2 className="mt-6 text-7xl font-bold leading-none sm:text-9xl">
+          Server
+        </h2>
+        <div className="mt-10">
+          <Link
+            href="#"
+            className="inline-flex h-12 items-center gap-2 rounded-full border border-white/25 px-6 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            참여하기 -&gt;
+          </Link>
+        </div>
+      </section>
+
+      <section id="team" className="bg-white px-8 py-20 sm:px-16 lg:px-24">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="text-center text-4xl font-bold text-ink">Team</h2>
+          <div className="mt-10 divide-y divide-ink/10">
+            {news.map((item) => (
+              <Link
+                key={item.text}
+                href={item.href}
+                className="group flex items-start justify-between gap-6 py-8 transition hover:opacity-60"
+              >
+                <div>
+                  <p className="mb-2 text-sm text-ink/40">
+                    {item.date}
+                    <span className="ml-4">{item.category}</span>
+                  </p>
+                  <p className="text-xl font-bold text-ink">{item.text}</p>
                 </div>
-              ))}
-            </div>
+                <span className="mt-1 shrink-0 text-ink/30 transition group-hover:translate-x-1">
+                  -&gt;
+                </span>
+              </Link>
+            ))}
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
+
+      <footer className="bg-[#0a0a0a] px-8 py-16 sm:px-16 lg:px-24">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-base font-bold text-white">Muel</p>
+          <p className="mt-1 text-sm text-white/45">
+            고닥ㆍ집을 원함 | fancy2794@gmail.com
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {[
+              { label: "공식 Discord", href: "#" },
+              { label: "블로그", href: "#" },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/55 transition hover:border-white/40 hover:text-white"
+              >
+                {link.label} -&gt;
+              </Link>
+            ))}
+          </div>
+          <p className="mt-14 text-xs text-white/20">
+            © 2025 Muel · 고닥ㆍ집을 원함. All Rights Reserved.
+          </p>
+        </div>
+      </footer>
     </>
   );
 }
