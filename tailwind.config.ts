@@ -11,6 +11,12 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        ink: "#191816",
+        cream: "#fff3c7",
+        mint: "#9ee8cf",
+        sky: "#cbeeff",
+        sun: "#ffd84d",
+        coral: "#ff9b82",
       },
     },
   },
