@@ -1,34 +1,49 @@
--- Muel Supabase RLS 정책
--- 실행: Supabase Dashboard > SQL Editor 에서 수동 실행
--- service role key를 쓰는 서버 API는 RLS를 bypass하므로,
--- 이 정책은 anon key로 접근하는 공개 읽기만 제어함.
+-- Muel Supabase RLS policies
+-- This file documents the intended public read model for Weave.
+-- It is safe to run repeatedly from the Supabase SQL Editor.
 
--- ═══════════════════════════════════════════════════════════
--- dreams
--- ═══════════════════════════════════════════════════════════
--- RLS는 이미 enabled 상태 (기존 설정 유지)
+alter table public.dreams enable row level security;
+alter table public.dream_connections enable row level security;
+alter table public.service_events enable row level security;
 
--- 공개/익명 꿈은 누구나 읽기 가능
-create policy "공개 꿈 읽기" on dreams
-  for select
-  using (visibility != 'private');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'dreams'
+      and policyname = 'Public dreams are readable'
+  ) then
+    create policy "Public dreams are readable"
+      on public.dreams
+      for select
+      using (visibility in ('anonymous', 'public'));
+  end if;
+end $$;
 
--- 쓰기는 service role만 (API route에서 service_role_key 사용)
--- anon key로는 insert/update/delete 불가
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'dream_connections'
+      and policyname = 'Public dream connections are readable'
+  ) then
+    create policy "Public dream connections are readable"
+      on public.dream_connections
+      for select
+      using (
+        exists (
+          select 1
+          from public.dreams a
+          join public.dreams b on b.id = dream_connections.dream_b
+          where a.id = dream_connections.dream_a
+            and a.visibility in ('anonymous', 'public')
+            and b.visibility in ('anonymous', 'public')
+        )
+      );
+  end if;
+end $$;
 
--- ═══════════════════════════════════════════════════════════
--- dream_connections
--- ═══════════════════════════════════════════════════════════
-alter table dream_connections enable row level security;
-
--- 연결은 누구나 읽기 가능 (그래프 표시용)
-create policy "연결 읽기" on dream_connections
-  for select
-  using (true);
-
--- ═══════════════════════════════════════════════════════════
--- service_events
--- ═══════════════════════════════════════════════════════════
--- RLS enabled + no public policy = anon key로 접근 불가
--- service role key로만 쓰고 읽는 운영 로그 테이블
--- 의도적으로 policy 없음
+-- service_events is server-only.
+-- Keep RLS enabled and intentionally create no anon/authenticated policy.

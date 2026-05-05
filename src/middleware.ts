@@ -52,7 +52,7 @@ export async function middleware(req: NextRequest) {
 
   if (req.method === "POST") {
     try {
-      const body = await req.text();
+      const body = await req.clone().text();
       if (containsXSS(body)) {
         return NextResponse.json(
           { error: "허용되지 않는 입력이에요." },

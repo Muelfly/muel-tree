@@ -67,12 +67,12 @@ export const services = [
     label: "Discord",
     href: "#server",
     route: null,
-    status: "planned",
-    statusLabel: "링크 준비 중",
+    status: "live",
+    statusLabel: "운영 중",
     operatingModel: "Discord Server + Supabase",
     description: "유저에게는 Discord Server로 보이고, 운영 데이터는 Supabase로 모입니다.",
     sectionClassName: "bg-[#1e2433] text-white",
-    primaryAction: { label: "참여 준비 중", href: null },
+    primaryAction: { label: "참여하기", href: "https://discord.gg/NdBHcbXpjh" },
   },
 ] satisfies MuelService[];
 
