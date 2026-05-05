@@ -11,6 +11,11 @@ export type DiscordSession = {
   sdk: DiscordSDK;
   user: DiscordUser | null;
   accessToken: string | null;
+  context: {
+    guildId: string | null;
+    channelId: string | null;
+    instanceId: string | null;
+  };
 };
 
 let _session: DiscordSession | null = null;
@@ -30,6 +35,12 @@ export async function initDiscord(): Promise<DiscordSession | null> {
 
   let user: DiscordUser | null = null;
   let accessToken: string | null = null;
+  const params = new URLSearchParams(window.location.search);
+  const context = {
+    guildId: params.get("guild_id"),
+    channelId: params.get("channel_id"),
+    instanceId: params.get("instance_id"),
+  };
   try {
     const { code } = await sdk.commands.authorize({
       client_id: process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID!,
@@ -57,6 +68,6 @@ export async function initDiscord(): Promise<DiscordSession | null> {
     // auth failed — run in anonymous mode
   }
 
-  _session = { sdk, user, accessToken };
+  _session = { sdk, user, accessToken, context };
   return _session;
 }

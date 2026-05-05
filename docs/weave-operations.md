@@ -29,8 +29,10 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 - Gemini extracts emotions, keywords, and a main tag.
 - Gemini creates an embedding.
 - Supabase stores the dream.
+- Supabase stores Discord user and Activity context on the dream row when available.
 - Supabase RPC `match_dreams` finds similar dreams.
 - Supabase stores any dream connections.
+- Supabase stores a `service_events` row for open, submit, or failed submit events.
 - The client adds the new dream node to the visible graph.
 
 ### Error UX
@@ -52,7 +54,7 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 
 ## Next Data Decisions
 
-- Decide whether `dreams` should store `discord_user_id`.
-- Decide whether `dreams` should store `guild_id` or Activity/session context.
+- Decide whether `discord_user_id` should eventually map into a first-class Muel profile table.
+- Decide whether `discord_guild_id` should become the primary community/session partition for Weave.
 - Decide whether Toss user identity should map to the same future Muel profile table.
 - Decide whether public graph reads should hide or redact raw `content` after beta.

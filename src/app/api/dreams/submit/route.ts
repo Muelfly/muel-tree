@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { forbiddenOrigin, isAllowedOrigin, requireDiscordUser } from "@/lib/request-security";
+import { logServiceEvent, normalizeActivityContext } from "@/lib/service-events";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
     return discordAuth.response;
   }
 
-  let body: { content?: string; visibility?: string };
+  let body: { content?: string; visibility?: string; context?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -91,13 +92,32 @@ export async function POST(req: NextRequest) {
   }
 
   const content = typeof body.content === "string" ? body.content.trim() : "";
+  const context = normalizeActivityContext(body.context);
   if (content.length < 5) {
+    await logServiceEvent({
+      serviceSlug: "weave",
+      eventType: "failed",
+      route: "/weave",
+      discordUser: discordAuth.user,
+      context,
+      status: "error",
+      metadata: { reason: "content_too_short" },
+    });
     return NextResponse.json(
       { error: "content must be at least 5 characters" },
       { status: 400 }
     );
   }
   if (content.length > 1200) {
+    await logServiceEvent({
+      serviceSlug: "weave",
+      eventType: "failed",
+      route: "/weave",
+      discordUser: discordAuth.user,
+      context,
+      status: "error",
+      metadata: { reason: "content_too_long" },
+    });
     return NextResponse.json(
       { error: "content must be 1200 characters or fewer" },
       { status: 400 }
@@ -108,6 +128,15 @@ export async function POST(req: NextRequest) {
   try {
     extracted = await extractWithGemini(content);
   } catch {
+    await logServiceEvent({
+      serviceSlug: "weave",
+      eventType: "failed",
+      route: "/weave",
+      discordUser: discordAuth.user,
+      context,
+      status: "error",
+      metadata: { reason: "ai_extraction_failed" },
+    });
     return NextResponse.json(
       { error: "AI extraction failed" },
       { status: 500 }
@@ -118,6 +147,15 @@ export async function POST(req: NextRequest) {
   try {
     embedding = await embedDream(content);
   } catch {
+    await logServiceEvent({
+      serviceSlug: "weave",
+      eventType: "failed",
+      route: "/weave",
+      discordUser: discordAuth.user,
+      context,
+      status: "error",
+      metadata: { reason: "embedding_failed" },
+    });
     return NextResponse.json(
       { error: "embedding generation failed" },
       { status: 500 }
@@ -138,11 +176,27 @@ export async function POST(req: NextRequest) {
       main_tag: extracted.main_tag,
       embedding: `[${embedding.join(',')}]`,
       visibility: body.visibility ?? "anonymous",
+      service_slug: "weave",
+      discord_user_id: discordAuth.user.id,
+      discord_username: discordAuth.user.username,
+      discord_avatar: discordAuth.user.avatar,
+      discord_guild_id: context.guildId ?? null,
+      discord_channel_id: context.channelId ?? null,
+      discord_instance_id: context.instanceId ?? null,
     })
-    .select("id, content, emotions, keywords, main_tag, visibility, created_at")
+    .select("id, content, emotions, keywords, main_tag, visibility, created_at, discord_user_id, discord_guild_id")
     .single();
 
   if (error) {
+    await logServiceEvent({
+      serviceSlug: "weave",
+      eventType: "failed",
+      route: "/weave",
+      discordUser: discordAuth.user,
+      context,
+      status: "error",
+      metadata: { reason: "dream_insert_failed" },
+    });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -162,6 +216,16 @@ export async function POST(req: NextRequest) {
   if (connections.length > 0) {
     await supabase.from("dream_connections").insert(connections);
   }
+
+  await logServiceEvent({
+    serviceSlug: "weave",
+    eventType: "submitted",
+    route: "/weave",
+    discordUser: discordAuth.user,
+    context,
+    subjectId: data.id,
+    metadata: { connectionsCreated: connections.length },
+  });
 
   return NextResponse.json(
     { dream: data, extracted, connections_created: connections.length },

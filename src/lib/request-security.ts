@@ -25,7 +25,14 @@ export function forbiddenOrigin() {
 }
 
 export async function requireDiscordUser(req: NextRequest): Promise<
-  | { ok: true; userId: string }
+  | {
+      ok: true;
+      user: {
+        id: string;
+        username: string | null;
+        avatar: string | null;
+      };
+    }
   | { ok: false; response: NextResponse }
 > {
   const auth = req.headers.get("authorization");
@@ -49,7 +56,11 @@ export async function requireDiscordUser(req: NextRequest): Promise<
     };
   }
 
-  const user = (await discordResponse.json()) as { id?: unknown };
+  const user = (await discordResponse.json()) as {
+    id?: unknown;
+    username?: unknown;
+    avatar?: unknown;
+  };
   if (typeof user.id !== "string") {
     return {
       ok: false,
@@ -57,5 +68,12 @@ export async function requireDiscordUser(req: NextRequest): Promise<
     };
   }
 
-  return { ok: true, userId: user.id };
+  return {
+    ok: true,
+    user: {
+      id: user.id,
+      username: typeof user.username === "string" ? user.username : null,
+      avatar: typeof user.avatar === "string" ? user.avatar : null,
+    },
+  };
 }

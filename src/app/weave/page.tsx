@@ -71,6 +71,7 @@ export default function WeavePage() {
   const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
   const [hasDiscordAuth, setHasDiscordAuth] = useState(false);
   const discordAccessToken = useRef<string | null>(null);
+  const activityContext = useRef<Record<string, string | null>>({});
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -97,6 +98,20 @@ export default function WeavePage() {
       if (session?.accessToken) {
         discordAccessToken.current = session.accessToken;
         setHasDiscordAuth(true);
+        activityContext.current = session.context;
+        appFetch("/api/service-events", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+          body: JSON.stringify({
+            serviceSlug: "weave",
+            eventType: "opened",
+            route: "/weave",
+            context: session.context,
+          }),
+        }).catch(() => {});
       }
       if (session?.user) setDiscordUser(session.user);
     });
@@ -118,7 +133,11 @@ export default function WeavePage() {
             ? { Authorization: `Bearer ${discordAccessToken.current}` }
             : {}),
         },
-        body: JSON.stringify({ content, visibility: "anonymous" }),
+        body: JSON.stringify({
+          content,
+          visibility: "anonymous",
+          context: activityContext.current,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

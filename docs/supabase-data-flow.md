@@ -18,6 +18,13 @@ Observed fields from the app:
 - `embedding`
 - `visibility`
 - `created_at`
+- `service_slug`
+- `discord_user_id`
+- `discord_username`
+- `discord_avatar`
+- `discord_guild_id`
+- `discord_channel_id`
+- `discord_instance_id`
 
 Current writes happen in `/api/dreams/submit` with the Supabase service role key.
 
@@ -35,9 +42,31 @@ Observed fields from the app:
 
 ### `sources`
 
-Used by older bot-side YouTube subscription code. This is not part of the current minimal Muel command surface.
+Used by Muel Bot's `/구독` utility for YouTube video/community post subscriptions.
 
-Keep it as legacy data until intentionally migrated, archived, or removed.
+This remains a server-side utility table. It should not define the public Muel product structure.
+
+### `service_events`
+
+Used as the shared Muel service event log.
+
+Observed fields from the app:
+
+- `id`
+- `service_slug`
+- `event_type`
+- `route`
+- `discord_user_id`
+- `discord_username`
+- `discord_guild_id`
+- `discord_channel_id`
+- `discord_instance_id`
+- `subject_id`
+- `status`
+- `metadata`
+- `created_at`
+
+Current writes happen from server routes with the Supabase service role key.
 
 ## Current Flow
 
@@ -51,6 +80,7 @@ Discord Activity
   -> Supabase dreams
   -> Supabase match_dreams RPC
   -> Supabase dream_connections
+  -> Supabase service_events
   -> Weave graph update
 ```
 
