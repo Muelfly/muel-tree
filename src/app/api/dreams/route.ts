@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { applyForceLayout3D } from "@/lib/force3d";
 import type { WeaveNode as DreamNode, WeaveEdge as DreamEdge } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 // main_tag 문자열을 결정론적으로 팔레트 색상으로 매핑
 const TAG_PALETTE = [
   "#f472b6", "#a78bfa", "#60a5fa", "#34d399",

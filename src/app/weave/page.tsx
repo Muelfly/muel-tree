@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { WeaveEdge, WeaveNode } from "@/types";
 import { appFetch, toErrorMessage } from "@/lib/app-fetch";
 import { initDiscord, type DiscordUser } from "@/lib/discord";
+import { DonateButton } from "@/components/DonateButton";
 
 const TAG_PALETTE = [
   "#f472b6",
@@ -216,6 +217,8 @@ export default function WeavePage() {
       <p className="absolute bottom-36 left-1/2 -translate-x-1/2 text-white/20 text-xs pointer-events-none select-none">
         {nodes.length > 0 ? `${nodes.length} dreams connected` : ""}
       </p>
+
+      <DonateButton />
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-lg px-4 z-20">
         <div className="bg-black/50 backdrop-blur-md border border-white/[0.08] rounded-2xl p-4 shadow-xl">
