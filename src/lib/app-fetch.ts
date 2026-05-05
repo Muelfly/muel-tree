@@ -3,13 +3,15 @@ const nativeFetch =
 
 export function appFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   if (init?.body && typeof init.body === "string") {
-    // Encode string body as UTF-8 bytes via Blob to avoid ByteString errors
-    // in Discord's WebView when the body contains non-Latin1 characters (e.g. Korean)
-    const encoded = new TextEncoder().encode(init.body);
-    const blob = new Blob([encoded], {
-      type: (init.headers as Record<string, string>)?.["Content-Type"] ?? "application/json",
-    });
-    return nativeFetch(input, { ...init, body: blob });
+    // Discord's WebView converts string bodies to ByteStrings (Latin-1 only).
+    // Blob bodies don't help — Discord reads them back as UTF-8 text, restoring the
+    // original non-Latin1 characters and triggering the same error.
+    // Escaping all non-ASCII chars as \uXXXX keeps the body pure ASCII while
+    // remaining valid JSON that the server parses back to the original text.
+    const safeBody = init.body.replace(/[^\x00-\x7F]/g, (c) =>
+      `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`
+    );
+    return nativeFetch(input, { ...init, body: safeBody });
   }
   return nativeFetch(input, init);
 }
