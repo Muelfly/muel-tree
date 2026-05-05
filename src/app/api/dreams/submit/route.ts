@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
+import { forbiddenOrigin, isAllowedOrigin, requireDiscordUser } from "@/lib/request-security";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -73,6 +74,15 @@ async function embedDream(content: string): Promise<number[]> {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAllowedOrigin(req)) {
+    return forbiddenOrigin();
+  }
+
+  const discordAuth = await requireDiscordUser(req);
+  if (!discordAuth.ok) {
+    return discordAuth.response;
+  }
+
   let body: { content?: string; visibility?: string };
   try {
     body = await req.json();
@@ -87,13 +97,19 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  if (content.length > 1200) {
+    return NextResponse.json(
+      { error: "content must be 1200 characters or fewer" },
+      { status: 400 }
+    );
+  }
 
   let extracted: ExtractResult;
   try {
     extracted = await extractWithGemini(content);
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: "AI extraction failed", detail: String(e) },
+      { error: "AI extraction failed" },
       { status: 500 }
     );
   }
@@ -101,9 +117,9 @@ export async function POST(req: NextRequest) {
   let embedding: number[];
   try {
     embedding = await embedDream(content);
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: "embedding generation failed", detail: String(e) },
+      { error: "embedding generation failed" },
       { status: 500 }
     );
   }

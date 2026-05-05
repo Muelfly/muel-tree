@@ -10,6 +10,7 @@ export type DiscordUser = {
 export type DiscordSession = {
   sdk: DiscordSDK;
   user: DiscordUser | null;
+  accessToken: string | null;
 };
 
 let _session: DiscordSession | null = null;
@@ -28,6 +29,7 @@ export async function initDiscord(): Promise<DiscordSession | null> {
   await sdk.ready();
 
   let user: DiscordUser | null = null;
+  let accessToken: string | null = null;
   try {
     const { code } = await sdk.commands.authorize({
       client_id: process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID!,
@@ -43,6 +45,7 @@ export async function initDiscord(): Promise<DiscordSession | null> {
       body: JSON.stringify({ code }),
     });
     const { access_token } = await res.json();
+    accessToken = typeof access_token === "string" ? access_token : null;
 
     const auth = await sdk.commands.authenticate({ access_token });
     user = {
@@ -54,6 +57,6 @@ export async function initDiscord(): Promise<DiscordSession | null> {
     // auth failed — run in anonymous mode
   }
 
-  _session = { sdk, user };
+  _session = { sdk, user, accessToken };
   return _session;
 }

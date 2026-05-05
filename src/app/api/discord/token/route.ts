@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { forbiddenOrigin, isAllowedOrigin } from "@/lib/request-security";
 
 export async function POST(req: NextRequest) {
+  if (!isAllowedOrigin(req)) {
+    return forbiddenOrigin();
+  }
+
   const { code } = await req.json();
   if (!code) return NextResponse.json({ error: "missing code" }, { status: 400 });
 

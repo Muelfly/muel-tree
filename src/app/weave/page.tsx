@@ -62,6 +62,8 @@ export default function WeavePage() {
   const [newNodeIds, setNewNodeIds] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<WeaveNode | null>(null);
   const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
+  const [hasDiscordAuth, setHasDiscordAuth] = useState(false);
+  const discordAccessToken = useRef<string | null>(null);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -85,6 +87,10 @@ export default function WeavePage() {
 
   useEffect(() => {
     initDiscord().then((session) => {
+      if (session?.accessToken) {
+        discordAccessToken.current = session.accessToken;
+        setHasDiscordAuth(true);
+      }
       if (session?.user) setDiscordUser(session.user);
     });
   }, []);
@@ -99,7 +105,12 @@ export default function WeavePage() {
     try {
       const res = await appFetch("/api/dreams/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(discordAccessToken.current
+            ? { Authorization: `Bearer ${discordAccessToken.current}` }
+            : {}),
+        },
         body: JSON.stringify({ content, visibility: "anonymous" }),
       });
       const data = await res.json();
@@ -242,11 +253,11 @@ export default function WeavePage() {
             </p>
             <div className="flex items-center gap-3">
               <span className="text-white/15 text-xs">
-                {submitting ? "" : "Enter"}
+                {submitting ? "" : hasDiscordAuth ? "Enter" : "Discord only"}
               </span>
               <button
                 onClick={submit}
-                disabled={!text.trim() || submitting}
+                disabled={!text.trim() || submitting || !hasDiscordAuth}
                 className="px-4 py-1.5 bg-indigo-500/70 hover:bg-indigo-400/70 disabled:opacity-30 disabled:cursor-not-allowed text-white text-xs rounded-lg transition-colors"
               >
                 {submitting ? "Analyzing..." : "Save"}
