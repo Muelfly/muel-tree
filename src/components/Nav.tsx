@@ -2,17 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-const NAV_ITEMS = [
-  { label: "Home", href: "/" },
-  { label: "Team", href: "#team" },
-  { label: "Muel", href: "#muel" },
-  { label: "Gomdori", href: "#gomdori" },
-  { label: "Weave", href: "#weave" },
-  { label: "Store", href: "#" },
-  { label: "Blog", href: "#" },
-  { label: "Support", href: "#" },
-];
+import { navigationItems } from "@/config/services";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
@@ -28,7 +18,7 @@ export function Nav() {
           </Link>
 
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 md:flex">
-            {NAV_ITEMS.map((item) => (
+            {navigationItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
@@ -75,7 +65,7 @@ export function Nav() {
         </div>
 
         <nav className="flex flex-col px-5 pt-4">
-          {NAV_ITEMS.map((item) => (
+          {navigationItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}

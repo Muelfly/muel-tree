@@ -5,8 +5,8 @@
 ## Landing Terms
 
 - **Muel** — Bot
-- **Gomdori** — Game
-- **Weave** — App
+- **Gomdori** — Game, operated as a `Discord <-> Toss` experience
+- **Weave** — App, operated as a `Discord <-> Toss` experience
 - **Server** — Discord
 - **Team** — updates and public-facing notices
 
@@ -20,9 +20,9 @@
 - `/api/dreams/submit` — authenticated Discord Activity write endpoint
 - `/api/discord/token` — Discord Activity OAuth token exchange
 
-## Product Registry
+## Service Registry
 
-Landing labels live in `src/config/apps.ts`. Keep public names aligned with the landing page before adding routes or bot commands.
+Public service names, labels, routes, statuses, CTA links, and operating models live in `src/config/services.ts`. The landing page and navigation read from that registry so Muel / Gomdori / Weave / Server stay aligned before adding routes or bot commands.
 
 ## Deployments
 
