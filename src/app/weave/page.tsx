@@ -7,6 +7,13 @@ import { appFetch, toErrorMessage } from "@/lib/app-fetch";
 import { initDiscord, type DiscordUser } from "@/lib/discord";
 import { DonateButton } from "@/components/DonateButton";
 
+function submitErrorMessage(status: number, fallback?: string): string {
+  if (status === 401) return "Discord 안에서 다시 열어주세요.";
+  if (status === 403) return "허용된 경로에서만 저장할 수 있어요.";
+  if (status === 400) return fallback ?? "내용을 조금 더 적어주세요.";
+  return "지금은 저장하지 못했어요. 잠시 후 다시 시도해주세요.";
+}
+
 const TAG_PALETTE = [
   "#f472b6",
   "#a78bfa",
@@ -115,7 +122,7 @@ export default function WeavePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setSubmitError(data.error ?? "Submit failed");
+        setSubmitError(submitErrorMessage(res.status, data.error));
         return;
       }
 
@@ -146,7 +153,9 @@ export default function WeavePage() {
         });
       }, 2500);
     } catch (e) {
-      setSubmitError(toErrorMessage(e));
+      setSubmitError(
+        toErrorMessage(e) || "지금은 저장하지 못했어요. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setSubmitting(false);
     }

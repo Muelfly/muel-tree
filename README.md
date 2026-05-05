@@ -24,6 +24,11 @@
 
 Public service names, labels, routes, statuses, CTA links, and operating models live in `src/config/services.ts`. The landing page and navigation read from that registry so Muel / Gomdori / Weave / Server stay aligned before adding routes or bot commands.
 
+## Operations Docs
+
+- `docs/weave-operations.md` — Weave entry, save, error UX, and release checklist
+- `docs/supabase-data-flow.md` — current Supabase tables and planned data flow
+
 ## Deployments
 
 - Web app: Vercel
