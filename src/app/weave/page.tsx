@@ -7,6 +7,8 @@ import { appFetch, toErrorMessage } from "@/lib/app-fetch";
 import { initDiscord, type DiscordUser } from "@/lib/discord";
 import { DonateButton } from "@/components/DonateButton";
 
+const REFRESH_INTERVAL = 30_000; // 30초마다 새로고침
+
 function submitErrorMessage(status: number, fallback?: string): string {
   if (status === 401) return "Discord 안에서 다시 열어주세요.";
   if (status === 403) return "허용된 경로에서만 저장할 수 있어요.";
@@ -78,20 +80,27 @@ export default function WeavePage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const newNodeTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  useEffect(() => {
+  const fetchDreams = useCallback(() => {
     appFetch("/api/dreams")
       .then((r) => r.json())
-      .then(({ nodes, edges, error }) => {
-        if (error) {
-          setError(error);
+      .then(({ nodes: n, edges: e, error: err }) => {
+        if (err) {
+          setError(err);
         } else {
-          setNodes(nodes ?? []);
-          setEdges(edges ?? []);
+          setNodes(n ?? []);
+          setEdges(e ?? []);
+          setError(null);
         }
       })
       .catch((e) => setError(toErrorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchDreams();
+    const timer = setInterval(fetchDreams, REFRESH_INTERVAL);
+    return () => clearInterval(timer);
+  }, [fetchDreams]);
 
   useEffect(() => {
     initDiscord().then((session) => {
@@ -200,20 +209,21 @@ export default function WeavePage() {
       />
 
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-          <p className="text-gray-600 text-sm">Loading dreams...</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
+          <div className="text-4xl animate-pulse">🧵</div>
+          <p className="text-white/30 text-sm mt-3">꿈을 불러오는 중...</p>
         </div>
       )}
 
       {error && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-red-900/60 text-red-300 text-xs px-4 py-2 rounded-lg pointer-events-none">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-red-900/60 text-red-300 text-xs px-4 py-2 rounded-lg pointer-events-none max-w-xs text-center">
           {error}
         </div>
       )}
 
       {selectedNode && (
         <div
-          className="absolute top-6 left-6 z-20 max-w-xs bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-4 cursor-pointer"
+          className="absolute top-4 left-4 md:top-6 md:left-6 z-20 max-w-[calc(100vw-2rem)] md:max-w-xs bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-3 md:p-4 cursor-pointer"
           onClick={() => setSelectedNode(null)}
         >
           <p className="text-white/80 text-sm leading-relaxed">
@@ -253,14 +263,19 @@ export default function WeavePage() {
         </div>
       )}
 
-      <p className="absolute bottom-36 left-1/2 -translate-x-1/2 text-white/20 text-xs pointer-events-none select-none">
-        {nodes.length > 0 ? `${nodes.length} dreams connected` : ""}
-      </p>
+      <div className="absolute bottom-36 left-1/2 -translate-x-1/2 text-center pointer-events-none select-none">
+        <p className="text-white/20 text-xs">
+          {nodes.length > 0 ? `${nodes.length} dreams connected` : ""}
+        </p>
+        <p className="text-white/10 text-[10px] mt-1 md:hidden">
+          터치로 회전 · 핀치로 줌
+        </p>
+      </div>
 
       <DonateButton />
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-lg px-4 z-20">
-        <div className="bg-black/50 backdrop-blur-md border border-white/[0.08] rounded-2xl p-4 shadow-xl">
+      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-lg px-3 md:px-4 z-20">
+        <div className="bg-black/50 backdrop-blur-md border border-white/[0.08] rounded-xl md:rounded-2xl p-3 md:p-4 shadow-xl">
           <textarea
             ref={textareaRef}
             value={text}

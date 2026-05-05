@@ -17,6 +17,10 @@ export function isAllowedOrigin(req: NextRequest): boolean {
   if (process.env.VERCEL_URL && origin === `https://${process.env.VERCEL_URL}`) {
     return true;
   }
+  // Discord Activity iframe (*.discordsays.com)
+  if (/^https:\/\/[\w-]+\.discordsays\.com$/.test(origin)) {
+    return true;
+  }
   return origin === "https://muel-tree.vercel.app";
 }
 
