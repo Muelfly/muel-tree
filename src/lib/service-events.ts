@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createServiceSupabaseClient, upsertDiscordMuelProfile } from "@/lib/muel-profile";
 
 export type ActivityContext = {
   guildId?: string | null;
@@ -13,11 +13,13 @@ export type ServiceEventInput = {
   discordUser?: {
     id: string;
     username?: string | null;
+    avatar?: string | null;
   } | null;
   context?: ActivityContext | null;
   subjectId?: string | null;
   status?: "ok" | "error";
   metadata?: Record<string, unknown>;
+  profileId?: string | null;
 };
 
 function nullableText(value: unknown): string | null {
@@ -35,12 +37,14 @@ export function normalizeActivityContext(value: unknown): ActivityContext {
 }
 
 export async function logServiceEvent(input: ServiceEventInput): Promise<void> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createServiceSupabaseClient();
 
   const context = input.context ?? {};
+  const profileId =
+    input.profileId ??
+    (input.discordUser
+      ? await upsertDiscordMuelProfile(supabase, input.discordUser)
+      : null);
   const { error } = await supabase.from("service_events").insert({
     service_slug: input.serviceSlug,
     event_type: input.eventType,
@@ -50,6 +54,7 @@ export async function logServiceEvent(input: ServiceEventInput): Promise<void> {
     discord_guild_id: context.guildId ?? null,
     discord_channel_id: context.channelId ?? null,
     discord_instance_id: context.instanceId ?? null,
+    muel_profile_id: profileId,
     subject_id: input.subjectId ?? null,
     status: input.status ?? "ok",
     metadata: input.metadata ?? {},

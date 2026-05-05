@@ -26,10 +26,11 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 - `/api/dreams/submit` checks the request origin.
 - `/api/dreams/submit` verifies the Discord access token against `https://discord.com/api/users/@me`.
 - The server trims and validates dream content.
+- The server maps the Discord user into a Muel profile.
 - Gemini extracts emotions, keywords, and a main tag.
 - Gemini creates an embedding.
 - Supabase stores the dream.
-- Supabase stores Discord user and Activity context on the dream row when available.
+- Supabase stores Discord user, Muel profile ID, and Activity context on the dream row when available.
 - Supabase RPC `match_dreams` finds similar dreams.
 - Supabase stores any dream connections.
 - Supabase stores a `service_events` row for open, submit, or failed submit events.
@@ -54,7 +55,6 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 
 ## Next Data Decisions
 
-- Decide whether `discord_user_id` should eventually map into a first-class Muel profile table.
 - Decide whether `discord_guild_id` should become the primary community/session partition for Weave.
-- Decide whether Toss user identity should map to the same future Muel profile table.
+- Decide when Toss user identity should attach to `muel_profiles`.
 - Decide whether public graph reads should hide or redact raw `content` after beta.

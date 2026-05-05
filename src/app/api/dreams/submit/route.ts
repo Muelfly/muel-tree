@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createClient } from "@supabase/supabase-js";
 import { forbiddenOrigin, isAllowedOrigin, requireDiscordUser } from "@/lib/request-security";
 import { logServiceEvent, normalizeActivityContext } from "@/lib/service-events";
+import { createServiceSupabaseClient, upsertDiscordMuelProfile } from "@/lib/muel-profile";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -93,6 +93,9 @@ export async function POST(req: NextRequest) {
 
   const content = typeof body.content === "string" ? body.content.trim() : "";
   const context = normalizeActivityContext(body.context);
+  const supabase = createServiceSupabaseClient();
+  const profileId = await upsertDiscordMuelProfile(supabase, discordAuth.user);
+
   if (content.length < 5) {
     await logServiceEvent({
       serviceSlug: "weave",
@@ -100,6 +103,7 @@ export async function POST(req: NextRequest) {
       route: "/weave",
       discordUser: discordAuth.user,
       context,
+      profileId,
       status: "error",
       metadata: { reason: "content_too_short" },
     });
@@ -115,6 +119,7 @@ export async function POST(req: NextRequest) {
       route: "/weave",
       discordUser: discordAuth.user,
       context,
+      profileId,
       status: "error",
       metadata: { reason: "content_too_long" },
     });
@@ -134,6 +139,7 @@ export async function POST(req: NextRequest) {
       route: "/weave",
       discordUser: discordAuth.user,
       context,
+      profileId,
       status: "error",
       metadata: { reason: "ai_extraction_failed" },
     });
@@ -153,6 +159,7 @@ export async function POST(req: NextRequest) {
       route: "/weave",
       discordUser: discordAuth.user,
       context,
+      profileId,
       status: "error",
       metadata: { reason: "embedding_failed" },
     });
@@ -161,11 +168,6 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 
   const { data, error } = await supabase
     .from("dreams")
@@ -183,8 +185,9 @@ export async function POST(req: NextRequest) {
       discord_guild_id: context.guildId ?? null,
       discord_channel_id: context.channelId ?? null,
       discord_instance_id: context.instanceId ?? null,
+      muel_profile_id: profileId,
     })
-    .select("id, content, emotions, keywords, main_tag, visibility, created_at, discord_user_id, discord_guild_id")
+    .select("id, content, emotions, keywords, main_tag, visibility, created_at, discord_user_id, discord_guild_id, muel_profile_id")
     .single();
 
   if (error) {
@@ -194,6 +197,7 @@ export async function POST(req: NextRequest) {
       route: "/weave",
       discordUser: discordAuth.user,
       context,
+      profileId,
       status: "error",
       metadata: { reason: "dream_insert_failed" },
     });
@@ -223,6 +227,7 @@ export async function POST(req: NextRequest) {
     route: "/weave",
     discordUser: discordAuth.user,
     context,
+    profileId,
     subjectId: data.id,
     metadata: { connectionsCreated: connections.length },
   });

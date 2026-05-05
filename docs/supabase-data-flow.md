@@ -1,6 +1,6 @@
 # Supabase Data Flow
 
-Supabase is the shared state layer behind Muel services. The public product names stay simple, while Supabase stores service state and operational records.
+Supabase is the shared state layer behind Muel services. The public product names stay simple, while Supabase stores service state, identity links, and operational records.
 
 ## Current Tables In Use
 
@@ -25,6 +25,7 @@ Observed fields from the app:
 - `discord_guild_id`
 - `discord_channel_id`
 - `discord_instance_id`
+- `muel_profile_id`
 
 Current writes happen in `/api/dreams/submit` with the Supabase service role key.
 
@@ -39,6 +40,37 @@ Observed fields from the app:
 - `dream_a`
 - `dream_b`
 - `similarity`
+
+### `muel_profiles`
+
+First-class Muel profile records.
+
+Current source of profile creation is Discord identity from Weave. Toss identity can later attach to the same profile table.
+
+Observed fields from the app:
+
+- `id`
+- `display_name`
+- `avatar_url`
+- `created_at`
+- `updated_at`
+
+### `muel_profile_identities`
+
+Maps external identities to one Muel profile.
+
+Observed fields from the app:
+
+- `profile_id`
+- `provider`
+- `provider_user_id`
+- `username`
+- `avatar_url`
+- `metadata`
+- `created_at`
+- `updated_at`
+
+Current allowed providers are `discord` and `toss`.
 
 ### `sources`
 
@@ -61,6 +93,7 @@ Observed fields from the app:
 - `discord_guild_id`
 - `discord_channel_id`
 - `discord_instance_id`
+- `muel_profile_id`
 - `subject_id`
 - `status`
 - `metadata`
@@ -76,6 +109,7 @@ Discord Activity
   -> /api/discord/token
   -> Discord OAuth token
   -> /api/dreams/submit
+  -> Supabase muel_profiles / muel_profile_identities
   -> Gemini extraction and embedding
   -> Supabase dreams
   -> Supabase match_dreams RPC
@@ -97,6 +131,6 @@ Discord / Toss / Bot
 ## Ownership Rule
 
 - Landing names live in `src/config/services.ts`.
-- Runtime state lives in Supabase.
+- Runtime state and identity links live in Supabase.
 - Public publishing should later flow through the Notion Agent.
 - Legacy bot data should not define new product structure.
