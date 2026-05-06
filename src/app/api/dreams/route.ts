@@ -4,6 +4,11 @@ import { applyForceLayout3D } from "@/lib/force3d";
 import type { WeaveNode as DreamNode, WeaveEdge as DreamEdge } from "@/types";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const noStoreHeaders = {
+  "Cache-Control": "no-store",
+};
 
 // main_tag 문자열을 결정론적으로 팔레트 색상으로 매핑
 const TAG_PALETTE = [
@@ -58,11 +63,11 @@ export async function GET() {
     ]);
 
   if (dreamsErr) {
-    return NextResponse.json({ error: dreamsErr.message }, { status: 500 });
+    return NextResponse.json({ error: dreamsErr.message }, { status: 500, headers: noStoreHeaders });
   }
 
   if (!dreams || dreams.length === 0) {
-    return NextResponse.json({ nodes: [], edges: [] });
+    return NextResponse.json({ nodes: [], edges: [] }, { headers: noStoreHeaders });
   }
 
   const nodes: DreamNode[] = dreams.map((d) => {
@@ -94,5 +99,5 @@ export async function GET() {
 
   const laid = applyForceLayout3D(nodes, edges, 150);
 
-  return NextResponse.json({ nodes: laid, edges });
+  return NextResponse.json({ nodes: laid, edges }, { headers: noStoreHeaders });
 }
