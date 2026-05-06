@@ -1,0 +1,82 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { appFetch } from "@/lib/app-fetch";
+import { initDiscord, type DiscordUser } from "@/lib/discord";
+import type { MuelActivity } from "@/config/activities";
+
+export type ActivitySession = {
+  discordUser: DiscordUser | null;
+  hasDiscordAuth: boolean;
+  accessToken: string | null;
+  activityContext: Record<string, string | null>;
+};
+
+type Props = {
+  activity: MuelActivity;
+  children: (session: ActivitySession) => React.ReactNode;
+};
+
+export function ActivityLayout({ activity, children }: Props) {
+  const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
+  const [hasDiscordAuth, setHasDiscordAuth] = useState(false);
+  const accessToken = useRef<string | null>(null);
+  const activityContext = useRef<Record<string, string | null>>({});
+  const [ready, setReady] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    initDiscord()
+      .then((session) => {
+        if (session?.accessToken) {
+          accessToken.current = session.accessToken;
+          setHasDiscordAuth(true);
+          activityContext.current = session.context;
+          appFetch("/api/service-events", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+            body: JSON.stringify({
+              serviceSlug: activity.serviceSlug,
+              eventType: "opened",
+              route: activity.route,
+              context: session.context,
+            }),
+          }).catch(() => {});
+        }
+        if (session?.user) setDiscordUser(session.user);
+      })
+      .catch((e) => {
+        setInitError(e instanceof Error ? e.message : "Discord 연결 실패");
+      })
+      .finally(() => setReady(true));
+  }, [activity.serviceSlug, activity.route]);
+
+  const session: ActivitySession = {
+    discordUser,
+    hasDiscordAuth,
+    accessToken: accessToken.current,
+    activityContext: activityContext.current,
+  };
+
+  return (
+    <div className="w-screen h-screen relative overflow-hidden">
+      {!ready && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none bg-[#070712]">
+          <div className="text-4xl animate-pulse">🧵</div>
+          <p className="text-white/30 text-sm mt-3">불러오는 중...</p>
+        </div>
+      )}
+
+      {initError && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-red-900/60 text-red-300 text-xs px-4 py-2 rounded-lg pointer-events-none max-w-xs text-center">
+          {initError}
+        </div>
+      )}
+
+      {ready && children(session)}
+    </div>
+  );
+}

@@ -6,19 +6,34 @@
 
 - **Muel** — Bot
 - **Gomdori** — Game, operated as a `Discord <-> Toss` experience
-- **Weave** — App, operated as a `Discord <-> Toss` experience
-- **Server** — Discord
+- **Weave (일기)** — App, operated as a `Discord <-> Toss` experience. Discord command: `/일기`, Activity route: `/weave`
+- **Server** — Discord (live, invite: https://discord.gg/NdBHcbXpjh)
 - **Team** — updates and public-facing notices
 
 ## Current Routes
 
 - `/` — Muel landing page
-- `/weave` — Weave
+- `/weave` — 일기 Activity (Discord command `/일기`)
 - `/force` — force-layout test surface
 - `/payment/success`, `/payment/fail` — Toss Payments return pages
-- `/api/dreams` — read 세계수 graph data
+- `/api/dreams` — public graph data (content excluded, tag/keywords/emotions only)
 - `/api/dreams/submit` — authenticated Discord Activity write endpoint
 - `/api/discord/token` — Discord Activity OAuth token exchange
+- `/api/service-events` — shared service event log
+- `/api/dreams/me` — authenticated personal dream read endpoint (content included)
+- `/api/payments/confirm` — Toss Payments server confirmation (requires `TOSS_SECRET_KEY`)
+
+## Activity Pattern
+
+Each Discord Activity is a route in this repo served as an iframe inside Discord. Common logic (Discord SDK init, auth, error handling, service event logging) lives in `src/components/ActivityLayout.tsx`. Activity metadata is centralized in `src/config/activities.ts`.
+
+To add a new Activity: register it in `activities.ts`, create a route folder (e.g. `src/app/game/page.tsx`), wrap content in `<ActivityLayout>`, and register the route in the corresponding Discord Application's URL mapping.
+
+## Data Layer
+
+- **Supabase**: `dreams`, `dream_connections`, `service_events`, `sources`, `muel_profiles`, `muel_profile_identities`
+- Discord users are upserted into `muel_profiles` on first interaction via `upsertDiscordMuelProfile`
+- Dreams and service events reference `muel_profile_id` for cross-service identity
 
 ## Service Registry
 

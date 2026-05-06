@@ -29,7 +29,7 @@ Observed fields from the app:
 
 Current writes happen in `/api/dreams/submit` with the Supabase service role key.
 
-Current reads happen in `/api/dreams` with the Supabase anon key.
+Current reads happen in `/api/dreams` with the Supabase anon key. The public API excludes `content` — graph nodes show `main_tag · keywords` only.
 
 ### `dream_connections`
 

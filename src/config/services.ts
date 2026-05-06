@@ -25,14 +25,14 @@ export const services = [
     label: "Bot",
     href: "#muel",
     route: null,
-    status: "planned",
-    statusLabel: "준비 중",
+    status: "beta",
+    statusLabel: "베타",
     operatingModel: "Discord Bot + Supabase",
     description: "커뮤니티 멤버가 Discord 안에서 바로 호출하는 챗봇 서비스입니다.",
     sectionClassName:
       "bg-gradient-to-br from-[#a2e61d] to-[#ffde90] text-ink",
     badgeLight: true,
-    primaryAction: { label: "초대 준비 중", href: null },
+    primaryAction: { label: "서버에서 멘션하기", href: "https://discord.gg/NdBHcbXpjh" },
   },
   {
     slug: "gomdori",
@@ -80,26 +80,23 @@ export const navigationItems = [
   { label: "Home", href: "/" },
   { label: "Team", href: "#team" },
   ...services.map(({ name, href }) => ({ label: name, href })),
-  { label: "Store", href: "#" },
-  { label: "Blog", href: "#" },
-  { label: "Support", href: "#" },
 ];
 
 export const teamUpdates = [
   {
-    date: "2025년 5월",
+    date: "2026년 5월",
     category: "Muel",
-    text: "Muel 챗봇 소개 준비 중",
+    text: "Muel 멘션 챗봇 연결 완료",
     href: "#muel",
   },
   {
-    date: "2025년 4월",
+    date: "2026년 4월",
     category: "Gomdori",
     text: "Gomdori 기획 중",
     href: "#gomdori",
   },
   {
-    date: "2025년 3월",
+    date: "2026년 3월",
     category: "Weave",
     text: "Weave 베타 공개",
     href: "#weave",

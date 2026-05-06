@@ -48,7 +48,8 @@ export async function GET() {
     await Promise.all([
       supabase
         .from("dreams")
-        .select("id, content, emotions, keywords, main_tag, created_at")
+        .select("id, emotions, keywords, main_tag, created_at")
+        .neq("visibility", "private")
         .order("created_at", { ascending: false })
         .limit(200),
       supabase
@@ -64,18 +65,25 @@ export async function GET() {
     return NextResponse.json({ nodes: [], edges: [] });
   }
 
-  const nodes: DreamNode[] = dreams.map((d) => ({
-    id: d.id,
-    label: (d.content as string)?.slice(0, 40) ?? "",
-    ...randomInSphere(15),
-    vx: 0,
-    vy: 0,
-    vz: 0,
-    color: tagColor(d.main_tag),
-    radius: emotionRadius(d.emotions),
-    emotion: Array.isArray(d.emotions) ? d.emotions[0] : undefined,
-    keywords: d.keywords,
-  }));
+  const nodes: DreamNode[] = dreams.map((d) => {
+    const keywords = Array.isArray(d.keywords) ? d.keywords : [];
+    const tag = d.main_tag ?? "";
+    const label = tag
+      ? [tag, ...keywords.slice(0, 2)].join(" · ")
+      : keywords.slice(0, 3).join(" · ") || "꿈";
+    return {
+      id: d.id,
+      label,
+      ...randomInSphere(15),
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      color: tagColor(d.main_tag),
+      radius: emotionRadius(d.emotions),
+      emotion: Array.isArray(d.emotions) ? d.emotions[0] : undefined,
+      keywords,
+    };
+  });
 
   const edges: DreamEdge[] = (connections ?? []).map((c) => ({
     source: c.dream_a,

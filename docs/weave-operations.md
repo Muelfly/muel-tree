@@ -1,14 +1,22 @@
-# Weave Operations
+# Weave (일기) Operations
 
-Weave is the first production candidate for the Muel `Discord <-> Toss` service model.
+Weave is the first production candidate for the Muel `Discord <-> Toss` service model. Discord command: `/일기`.
 
 ## Public Surface
 
 - **Landing section**: `Weave` in `/`
 - **Activity route**: `/weave`
+- **Discord command**: `/일기`
 - **Operating model**: `Discord <-> Toss`
 - **Current status**: beta
 - **State layer**: Supabase
+
+## Public Graph Policy
+
+- The public API (`/api/dreams`) does **not** return raw `content`.
+- Node labels are built from `main_tag · keyword1 · keyword2`.
+- `emotions`, `keywords`, `main_tag` are public.
+- Raw `content` is stored in Supabase but only accessible via authenticated endpoints.
 
 ## Operating Checklist
 
@@ -26,15 +34,15 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 - `/api/dreams/submit` checks the request origin.
 - `/api/dreams/submit` verifies the Discord access token against `https://discord.com/api/users/@me`.
 - The server trims and validates dream content.
-- The server maps the Discord user into a Muel profile.
+- The server upserts the Discord user into `muel_profiles` via `upsertDiscordMuelProfile`.
 - Gemini extracts emotions, keywords, and a main tag.
 - Gemini creates an embedding.
-- Supabase stores the dream.
-- Supabase stores Discord user, Muel profile ID, and Activity context on the dream row when available.
+- Supabase stores the dream with `muel_profile_id`.
+- Supabase stores Discord user and Activity context on the dream row when available.
 - Supabase RPC `match_dreams` finds similar dreams.
 - Supabase stores any dream connections.
-- Supabase stores a `service_events` row for open, submit, or failed submit events.
-- The client adds the new dream node to the visible graph.
+- Supabase stores a `service_events` row (with `muel_profile_id`) for open, submit, or failed submit events.
+- The client adds the new dream node to the visible graph using tag/keywords label (not raw content).
 
 ### Error UX
 
@@ -57,4 +65,3 @@ Weave is the first production candidate for the Muel `Discord <-> Toss` service 
 
 - Decide whether `discord_guild_id` should become the primary community/session partition for Weave.
 - Decide when Toss user identity should attach to `muel_profiles`.
-- Decide whether public graph reads should hide or redact raw `content` after beta.

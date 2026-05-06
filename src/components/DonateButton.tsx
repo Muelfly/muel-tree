@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { getTossPayments } from "@/lib/toss";
+
+const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
 
 export function DonateButton() {
   const [thanked, setThanked] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  if (!TOSS_CLIENT_KEY) return null;
+
   async function donate() {
     if (busy) return;
     setBusy(true);
     try {
+      const { getTossPayments } = await import("@/lib/toss");
       const toss = await getTossPayments();
       const orderId = `donation-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       await toss.requestPayment("카드", {
