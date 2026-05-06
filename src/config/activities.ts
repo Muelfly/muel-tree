@@ -14,6 +14,13 @@ export const activities: MuelActivity[] = [
     serviceSlug: "weave",
     description: "꿈을 기록하고 연결하는 인터랙티브 앱",
   },
+  {
+    slug: "gomdori-mafia",
+    name: "마피아",
+    route: "/game",
+    serviceSlug: "gomdori",
+    description: "Gomdori 마피아 — 천사와 악마의 비대칭 추리 게임",
+  },
 ];
 
 export function getActivity(slug: string): MuelActivity | undefined {
