@@ -26,8 +26,8 @@ export default function Home() {
           ? "bg-ink text-white hover:bg-ink/80"
           : "bg-white text-ink hover:bg-white/85";
         const disabledClass = isLight
-          ? "border border-ink/20 text-ink/40"
-          : "border border-white/15 text-white/35";
+          ? "border border-ink/20 text-ink/45"
+          : "border border-white/15 text-white/40";
 
         return (
           <section
@@ -49,14 +49,14 @@ export default function Home() {
             )}
             <p
               className={`mt-5 max-w-xl text-base leading-relaxed ${
-                isLight ? "text-ink/65" : "text-white/55"
+                isLight ? "text-ink/65" : "text-white/60"
               }`}
             >
               {service.description}
             </p>
             <p
               className={`mt-3 text-xs font-semibold uppercase tracking-widest ${
-                isLight ? "text-ink/45" : "text-white/35"
+                isLight ? "text-ink/45" : "text-white/40"
               }`}
             >
               {service.operatingModel} / {service.statusLabel}
@@ -77,6 +77,15 @@ export default function Home() {
                 </span>
               )}
             </div>
+            {service.note && (
+              <p
+                className={`mt-5 max-w-lg text-sm leading-relaxed ${
+                  isLight ? "text-ink/50" : "text-white/45"
+                }`}
+              >
+                {service.note}
+              </p>
+            )}
           </section>
         );
       })}
@@ -125,7 +134,7 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-14 text-xs text-white/20">
-            © 2025 Muel · 고닥ㆍ집을 원함. All Rights Reserved.
+            © 2026 Muel · 고닥ㆍ집을 원함. All Rights Reserved.
           </p>
         </div>
       </footer>

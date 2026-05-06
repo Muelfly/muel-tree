@@ -16,6 +16,7 @@ export type MuelService = {
     label: string;
     href: string | null;
   };
+  note?: string;
 };
 
 export const services = [
@@ -28,11 +29,12 @@ export const services = [
     status: "beta",
     statusLabel: "베타",
     operatingModel: "Discord Bot + Supabase",
-    description: "커뮤니티 멤버가 Discord 안에서 바로 호출하는 챗봇 서비스입니다.",
+    description: "Discord에서 멘션하면 서버 맥락, 대화 기억, 구독 정보를 바탕으로 바로 답하는 커뮤니티 캐릭터입니다.",
     sectionClassName:
       "bg-gradient-to-br from-[#a2e61d] to-[#ffde90] text-ink",
     badgeLight: true,
-    primaryAction: { label: "서버에서 멘션하기", href: "https://discord.gg/NdBHcbXpjh" },
+    primaryAction: { label: "Discord에서 @Muel 멘션", href: null },
+    note: "초대 링크를 열어두기보다, 지금은 운영 중인 서버 안에서 멘션 기반으로 사용합니다.",
   },
   {
     slug: "gomdori",
@@ -42,24 +44,26 @@ export const services = [
     route: null,
     status: "planned",
     statusLabel: "기획 중",
-    operatingModel: "Discord <-> Toss",
-    description: "인플루언서와 커뮤니티 멤버가 함께 시작하는 추리 게임 경험입니다.",
+    operatingModel: "Discord Activity + Toss",
+    description: "커뮤니티 멤버가 함께 시작하는 추리 게임 경험입니다. 결제와 보상 구조는 사업자 등록 이후 붙입니다.",
     sectionClassName: "bg-[#0a0a0a] text-white",
     primaryAction: { label: "준비 중", href: null },
+    note: "Muel과 Weave가 안정화된 뒤 별도 Activity로 확장합니다.",
   },
   {
     slug: "weave",
     name: "Weave",
-    label: "App",
+    label: "Activity",
     href: "#weave",
     route: "/weave",
     status: "beta",
     statusLabel: "베타",
-    operatingModel: "Discord <-> Toss",
-    description: "공동 경험과 기록을 꿈 네트워크로 연결하는 인터랙티브 앱입니다.",
+    operatingModel: "Discord Activity + Supabase Vector",
+    description: "꿈을 기록하고 비슷한 기록을 연결해 공개 그래프로 보여주는 첫 번째 Muel Activity입니다.",
     sectionClassName:
       "bg-gradient-to-br from-[#5B21B6] to-[#DB2777] text-white",
-    primaryAction: { label: "체험하기", href: "/weave" },
+    primaryAction: { label: "일기 열기", href: "/weave" },
+    note: "Discord 안에서는 앱 런처에서 일기를 실행하면 인증과 기록 저장이 이어집니다.",
   },
   {
     slug: "server",
@@ -70,9 +74,10 @@ export const services = [
     status: "live",
     statusLabel: "운영 중",
     operatingModel: "Discord Server + Supabase",
-    description: "유저에게는 Discord Server로 보이고, 운영 데이터는 Supabase로 모입니다.",
+    description: "유저 경험은 Discord에 남기고, 기억과 이벤트는 Supabase로 모아 Muel이 다시 읽을 수 있게 합니다.",
     sectionClassName: "bg-[#1e2433] text-white",
-    primaryAction: { label: "참여하기", href: "https://discord.gg/NdBHcbXpjh" },
+    primaryAction: { label: "서버 안에서 사용", href: null },
+    note: "공개 초대보다 Activity, 멘션, 구독 명령의 진입면을 먼저 정리합니다.",
   },
 ] satisfies MuelService[];
 
@@ -86,24 +91,25 @@ export const teamUpdates = [
   {
     date: "2026년 5월",
     category: "Muel",
-    text: "Muel 멘션 챗봇 연결 완료",
+    text: "멘션 기반 봇과 Discord Activity 엔트리포인트 정리",
     href: "#muel",
   },
   {
-    date: "2026년 4월",
-    category: "Gomdori",
-    text: "Gomdori 기획 중",
-    href: "#gomdori",
+    date: "2026년 5월",
+    category: "Memory",
+    text: "대화 로그, 꿈 기록, 임베딩 검색 기반으로 기억 구조 확장",
+    href: "#server",
   },
   {
-    date: "2026년 3월",
+    date: "2026년 5월",
     category: "Weave",
-    text: "Weave 베타 공개",
+    text: "꿈 기록과 공개 그래프 베타 운영",
     href: "#weave",
   },
 ];
 
 export const footerLinks = [
-  { label: "공식 Discord", href: "#server" },
-  { label: "블로그", href: "#" },
+  { label: "Muel", href: "#muel" },
+  { label: "Weave", href: "/weave" },
+  { label: "Server", href: "#server" },
 ];
