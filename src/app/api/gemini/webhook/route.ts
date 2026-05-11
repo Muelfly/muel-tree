@@ -18,8 +18,10 @@ export async function POST(req: NextRequest) {
   const allowUnverified = process.env.GEMINI_WEBHOOK_ALLOW_UNVERIFIED === "true";
 
   const verified = secrets.some((secret) => verifyStandardWebhook({ body: rawBody, headers, secret }));
-  if (secrets.length > 0 && !verified) {
-    return NextResponse.json({ error: "invalid webhook signature" }, { status: 401 });
+  if (secrets.length > 0) {
+    if (!verified) {
+      return NextResponse.json({ error: "invalid webhook signature" }, { status: 401 });
+    }
   } else if (!allowUnverified) {
     return NextResponse.json({ error: "Gemini webhook signing secret is not configured" }, { status: 501 });
   }
