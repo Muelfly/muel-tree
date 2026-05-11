@@ -1,0 +1,48 @@
+"use client";
+
+import type { PlayerSummary } from "@/lib/game/api";
+
+type VerdictPhaseProps = {
+  players: PlayerSummary[];
+  events: Array<{ id: string; event_type: string; payload?: Record<string, unknown> }>;
+};
+
+export function VerdictPhase({ players, events }: VerdictPhaseProps) {
+  // Find the verdict event
+  const verdictEvent = events.find((e) => e.event_type === "verdict");
+  const executedUserId = verdictEvent?.payload?.executed_user_id as string | null | undefined;
+  
+  const executedPlayer = executedUserId ? players.find(p => p.userId === executedUserId) : null;
+
+  return (
+    <div className="flex h-full w-full items-center justify-center p-5">
+      <div className={`w-full max-w-2xl rounded-lg border p-10 text-center shadow-2xl animate-in fade-in zoom-in duration-500 ${
+        executedPlayer ? "border-red-500/30 bg-red-950/40" : "border-white/10 bg-white/[0.04]"
+      }`}>
+        <h2 className={`text-sm font-medium tracking-widest uppercase ${executedPlayer ? "text-red-400/80" : "text-white/50"}`}>
+          투표 결과
+        </h2>
+        
+        {executedPlayer ? (
+          <>
+            <h1 className="mt-8 text-4xl sm:text-5xl font-bold text-white">
+              {executedPlayer.displayName}님이 처형되었습니다.
+            </h1>
+            <p className="mt-8 text-lg text-white/60">
+              죽은 자의 정체는 게임이 끝날 때까지 공개되지 않습니다.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="mt-8 text-4xl sm:text-5xl font-bold text-white">
+              동률이거나 기권이 많습니다.
+            </h1>
+            <p className="mt-8 text-lg text-white/60">
+              오늘은 아무도 처형되지 않았습니다.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

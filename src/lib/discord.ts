@@ -18,7 +18,7 @@ export type DiscordSession = {
   };
 };
 
-let _session: DiscordSession | null = null;
+const sessions = new Map<string, DiscordSession>();
 
 export function isInsideDiscord(): boolean {
   if (typeof window === "undefined") return false;
@@ -26,11 +26,41 @@ export function isInsideDiscord(): boolean {
   return p.includes("frame_id") || p.includes("instance_id");
 }
 
-export async function initDiscord(): Promise<DiscordSession | null> {
-  if (!isInsideDiscord()) return null;
-  if (_session) return _session;
+/**
+ * Per-Activity Discord client_id lookup.
+ *
+ * Each Muel Activity is hosted by its own Discord application, so OAuth must
+ * use the matching client_id. We use a literal switch (not dynamic
+ * process.env[key] access) so Next.js can statically inline NEXT_PUBLIC_*
+ * values at build time.
+ */
+function getDiscordClientId(activitySlug: string): string | undefined {
+  switch (activitySlug) {
+    case "weave":
+      return process.env.NEXT_PUBLIC_WEAVE_DISCORD_CLIENT_ID;
+    case "gomdori-mafia":
+      return process.env.NEXT_PUBLIC_GOMDORI_DISCORD_CLIENT_ID;
+    default:
+      return undefined;
+  }
+}
 
-  const sdk = new DiscordSDK(process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID!);
+export async function initDiscord(
+  activitySlug: string,
+): Promise<DiscordSession | null> {
+  if (!isInsideDiscord()) return null;
+  const cached = sessions.get(activitySlug);
+  if (cached) return cached;
+
+  const clientId = getDiscordClientId(activitySlug);
+  if (!clientId) {
+    throw new Error(
+      `No Discord client_id configured for activity "${activitySlug}". ` +
+        `Set the matching NEXT_PUBLIC_*_DISCORD_CLIENT_ID env in muel-tree.`,
+    );
+  }
+
+  const sdk = new DiscordSDK(clientId);
   await sdk.ready();
 
   let user: DiscordUser | null = null;
@@ -43,7 +73,7 @@ export async function initDiscord(): Promise<DiscordSession | null> {
   };
   try {
     const { code } = await sdk.commands.authorize({
-      client_id: process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID!,
+      client_id: clientId,
       response_type: "code",
       state: "",
       prompt: "none",
@@ -53,7 +83,7 @@ export async function initDiscord(): Promise<DiscordSession | null> {
     const res = await appFetch("/api/discord/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, activitySlug }),
     });
     const { access_token } = await res.json();
     accessToken = typeof access_token === "string" ? access_token : null;
@@ -68,6 +98,7 @@ export async function initDiscord(): Promise<DiscordSession | null> {
     // auth failed — run in anonymous mode
   }
 
-  _session = { sdk, user, accessToken, context };
-  return _session;
+  const session = { sdk, user, accessToken, context };
+  sessions.set(activitySlug, session);
+  return session;
 }

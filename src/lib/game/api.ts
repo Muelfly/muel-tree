@@ -1,12 +1,4 @@
 // Typed wrappers around the game server (Supabase Edge Functions) endpoints.
-//
-// Phase 1 status: skeleton. Endpoint URLs are read from
-// NEXT_PUBLIC_MAFIA_GAME_API_BASE_URL (e.g. the deployed Supabase Edge Functions
-// base, https://<project>.functions.supabase.co). Locally,
-// `supabase functions serve` exposes them at http://localhost:54321/functions/v1.
-//
-// All endpoints below are placeholders; they reference functions that will be
-// implemented in subsequent sessions.
 
 const BASE = process.env.NEXT_PUBLIC_MAFIA_GAME_API_BASE_URL ?? "";
 
@@ -20,16 +12,13 @@ function endpoint(name: string): string {
 async function postJson<TReq, TRes>(
   name: string,
   body: TReq,
-  options: { gameJwt?: string; discordToken?: string } = {},
+  options: { gameJwt?: string } = {},
 ): Promise<TRes> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
   };
   if (options.gameJwt) {
-    headers["authorization"] = `Bearer ${options.gameJwt}`;
-  }
-  if (options.discordToken) {
-    headers["x-discord-token"] = options.discordToken;
+    headers.authorization = `Bearer ${options.gameJwt}`;
   }
 
   const res = await fetch(endpoint(name), {
@@ -44,15 +33,12 @@ async function postJson<TReq, TRes>(
   return (await res.json()) as TRes;
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Auth exchange — Discord OAuth access token → mafia.users.id + game JWT.
-// ────────────────────────────────────────────────────────────────────────────
-
 export type AuthExchangeResult = {
-  userId: string;          // mafia.users.id
+  userId: string;
   displayName: string;
+  avatarUrl: string | null;
   gameJwt: string;
-  expiresAt: string;       // ISO
+  expiresAt: string;
 };
 
 export async function authExchange(input: {
@@ -61,14 +47,30 @@ export async function authExchange(input: {
   return postJson<typeof input, AuthExchangeResult>("auth-exchange", input);
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Match lifecycle — placeholder signatures for the next session.
-// ────────────────────────────────────────────────────────────────────────────
-
 export type MatchSummary = {
   id: string;
-  status: string;          // 'lobby' | 'role_assign' | ...
-  hostUserId: string;
+  status: string;
+  hostUserId: string | null;
+  contextType: string;
+  contextId: string | null;
+  maxPlayers: number;
+  createdAt: string;
+  startedAt: string | null;
+  endedAt: string | null;
+};
+
+export type PlayerSummary = {
+  matchId: string;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  alive: boolean;
+  ready: boolean;
+  isHost: boolean;
+  joinedAt: string;
+  lastSeenAt: string | null;
+  role: string | null;
+  faction: string | null;
 };
 
 export async function resolveMatch(
@@ -78,9 +80,60 @@ export async function resolveMatch(
   return postJson<typeof input, MatchSummary | null>("match-resolve", input, { gameJwt });
 }
 
+export async function createMatch(
+  input: { discordChannelId: string; discordGuildId?: string | null },
+  gameJwt: string,
+): Promise<{ match: MatchSummary; created: boolean }> {
+  return postJson<typeof input, { match: MatchSummary; created: boolean }>(
+    "match-create",
+    input,
+    { gameJwt },
+  );
+}
+
 export async function joinMatch(
   matchId: string,
   gameJwt: string,
-): Promise<MatchSummary> {
-  return postJson<{ matchId: string }, MatchSummary>("match-join", { matchId }, { gameJwt });
+): Promise<{ match: MatchSummary; player: PlayerSummary }> {
+  return postJson<{ matchId: string }, { match: MatchSummary; player: PlayerSummary }>(
+    "match-join",
+    { matchId },
+    { gameJwt },
+  );
+}
+
+export async function setReady(
+  matchId: string,
+  ready: boolean,
+  gameJwt: string,
+): Promise<{ match: MatchSummary; player: PlayerSummary }> {
+  return postJson<{ matchId: string; ready: boolean }, { match: MatchSummary; player: PlayerSummary }>(
+    "match-ready",
+    { matchId, ready },
+    { gameJwt },
+  );
+}
+
+export async function startMatch(
+  matchId: string,
+  gameJwt: string,
+): Promise<{ success: boolean; phase: Record<string, unknown> }> {
+  return postJson<{ matchId: string }, { success: boolean; phase: Record<string, unknown> }>(
+    "match-start",
+    { matchId },
+    { gameJwt },
+  );
+}
+
+export async function submitAction(
+  matchId: string,
+  actionType: string,
+  targetUserId: string | null,
+  gameJwt: string,
+): Promise<{ success: boolean; investigationResult?: string | null }> {
+  return postJson<{ matchId: string; actionType: string; targetUserId: string | null }, { success: boolean; investigationResult?: string | null }>(
+    "match-action",
+    { matchId, actionType, targetUserId },
+    { gameJwt },
+  );
 }

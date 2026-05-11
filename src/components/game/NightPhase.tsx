@@ -1,0 +1,190 @@
+"use client";
+
+import { useState } from "react";
+import type { MatchSummary, PlayerSummary } from "@/lib/game/api";
+import { submitAction } from "@/lib/game/api";
+
+type NightPhaseProps = {
+  match: MatchSummary;
+  players: PlayerSummary[];
+  myPlayer: PlayerSummary | null;
+  gameJwt: string;
+};
+
+export function NightPhase({ match, players, myPlayer, gameJwt }: NightPhaseProps) {
+  const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [investigationResult, setInvestigationResult] = useState<string | null>(null);
+
+  if (!myPlayer || !myPlayer.alive) {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-5">
+        <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
+          <h2 className="text-sm font-medium text-white/50 tracking-widest uppercase">밤</h2>
+          <h1 className="mt-6 text-2xl font-semibold text-white">관전 모드</h1>
+          <p className="mt-4 text-sm text-white/40">당신은 사망했습니다. 다른 플레이어들의 행동을 지켜보세요.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const role = myPlayer.role;
+
+  const handleAction = async (actionType: string) => {
+    if (!selectedTarget) return;
+    setIsSubmitting(true);
+    try {
+      const res = await submitAction(match.id, actionType, selectedTarget, gameJwt);
+      setSubmitted(true);
+      if (res.investigationResult) {
+        setInvestigationResult(res.investigationResult);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "행동 실패");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderTargets = (
+    targets: PlayerSummary[],
+    actionType: string,
+    buttonText: string
+  ) => {
+    return (
+      <div className="mt-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {targets.map((p) => (
+            <button
+              key={p.userId}
+              onClick={() => !submitted && setSelectedTarget(p.userId)}
+              disabled={submitted}
+              className={`rounded-md border p-4 text-center transition-colors ${
+                selectedTarget === p.userId
+                  ? "border-emerald-400 bg-emerald-400/20 text-emerald-100"
+                  : "border-white/10 bg-black/20 text-white/70 hover:bg-white/5 hover:text-white"
+              } ${submitted ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <div className="truncate text-sm font-medium">{p.displayName}</div>
+            </button>
+          ))}
+        </div>
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={() => handleAction(actionType)}
+            disabled={!selectedTarget || isSubmitting || submitted}
+            className="h-12 w-full max-w-xs rounded-md bg-emerald-300 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
+          >
+            {submitted ? "결정 완료" : isSubmitting ? "전송 중..." : buttonText}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Roles rendering
+  if (role === "citizen") {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-5">
+        <div className="w-full max-w-lg rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
+          <h2 className="text-sm font-medium text-white/50 tracking-widest uppercase">밤이 되었습니다</h2>
+          <h1 className="mt-6 text-2xl font-semibold text-white">당신은 잠들었습니다.</h1>
+          <p className="mt-4 text-sm text-white/40">아침이 밝을 때까지 기다려주세요.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (role === "doctor") {
+    const targets = players.filter((p) => p.alive);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-900/10 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-emerald-500/70 tracking-widest uppercase">의사</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-emerald-100">치료할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-emerald-200/50">오늘 밤 마피아의 공격으로부터 보호할 사람을 고르세요. (자기 자신 포함)</p>
+          {renderTargets(targets, "doctor_heal", "치료하기")}
+        </div>
+      </div>
+    );
+  }
+
+  if (role === "police") {
+    const targets = players.filter((p) => p.alive && p.userId !== myPlayer.userId);
+    return (
+      <div className="flex flex-col h-full w-full max-w-4xl mx-auto p-5">
+        <div className="rounded-lg border border-blue-500/20 bg-blue-900/10 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-blue-500/70 tracking-widest uppercase">경찰</h2>
+          <h1 className="mt-2 text-2xl font-semibold text-blue-100">조사할 대상을 선택하세요</h1>
+          <p className="mt-2 text-sm text-blue-200/50">오늘 밤 정체를 알아볼 사람을 고르세요.</p>
+          
+          {investigationResult ? (
+            <div className={`mt-8 p-6 rounded-lg text-center ${investigationResult === 'demon' ? 'bg-red-900/30 border border-red-500/30' : 'bg-emerald-900/30 border border-emerald-500/30'}`}>
+              <div className="text-sm opacity-70 mb-2">조사 결과</div>
+              <div className={`text-2xl font-bold ${investigationResult === 'demon' ? 'text-red-400' : 'text-emerald-400'}`}>
+                {investigationResult === 'demon' ? '악마입니다!' : '악마가 아닙니다.'}
+              </div>
+            </div>
+          ) : (
+            renderTargets(targets, "police_investigate", "조사하기")
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (role === "demon" || role === "helper") {
+    const targets = players.filter((p) => p.alive && p.faction !== "demon");
+    
+    return (
+      <div className="flex h-full w-full max-w-6xl mx-auto p-5 gap-5">
+        <div className="flex-1 rounded-lg border border-red-500/20 bg-red-900/10 p-6 sm:p-10">
+          <h2 className="text-sm font-medium text-red-500/70 tracking-widest uppercase">{role === "demon" ? "악마" : "조력자"}</h2>
+          
+          {role === "demon" ? (
+            <>
+              <h1 className="mt-2 text-2xl font-semibold text-red-100">공격할 대상을 선택하세요</h1>
+              <p className="mt-2 text-sm text-red-200/50">조력자와 상의하여 오늘 밤 처치할 대상을 고르세요.</p>
+              {renderTargets(targets, "demon_kill", "처치하기")}
+            </>
+          ) : (
+            <>
+              <h1 className="mt-2 text-2xl font-semibold text-red-100">당신은 조력자입니다</h1>
+              <p className="mt-2 text-sm text-red-200/50">우측 채팅을 통해 악마와 상의하세요. 직접 공격할 수는 없습니다.</p>
+              <div className="mt-8 opacity-50 pointer-events-none">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {targets.map((p) => (
+                    <div key={p.userId} className="rounded-md border border-white/10 bg-black/20 p-4 text-center text-white/70">
+                      <div className="truncate text-sm font-medium">{p.displayName}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        
+        {/* Placeholder for Chat */}
+        <div className="w-80 rounded-lg border border-red-500/10 bg-black/40 flex flex-col hidden lg:flex">
+          <div className="p-4 border-b border-white/5 font-medium text-red-200/80 text-sm">
+            악마의 속삭임 (채팅)
+          </div>
+          <div className="flex-1 p-4 flex items-center justify-center text-white/20 text-sm">
+            (채팅 연동 준비 중)
+          </div>
+          <div className="p-3 border-t border-white/5">
+            <input 
+              type="text" 
+              disabled 
+              placeholder="메시지 입력..." 
+              className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}

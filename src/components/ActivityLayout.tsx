@@ -26,7 +26,7 @@ export function ActivityLayout({ activity, children }: Props) {
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    initDiscord()
+    initDiscord(activity.slug)
       .then((session) => {
         if (session?.accessToken) {
           accessToken.current = session.accessToken;
@@ -52,7 +52,7 @@ export function ActivityLayout({ activity, children }: Props) {
         setInitError(e instanceof Error ? e.message : "Discord 연결 실패");
       })
       .finally(() => setReady(true));
-  }, [activity.serviceSlug, activity.route]);
+  }, [activity.slug, activity.serviceSlug, activity.route]);
 
   const session: ActivitySession = {
     discordUser,
