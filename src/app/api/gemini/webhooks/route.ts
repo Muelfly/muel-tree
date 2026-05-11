@@ -6,10 +6,12 @@ export const runtime = "nodejs";
 
 const defaultEvents = [
   "batch.succeeded",
+  "batch.expired",
   "batch.failed",
-  "batch.cancelled",
-  "video.generated",
+  "interaction.requires_action",
   "interaction.completed",
+  "interaction.failed",
+  "video.generated",
 ];
 
 export async function GET(req: NextRequest) {
