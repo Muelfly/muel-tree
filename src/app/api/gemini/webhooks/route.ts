@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const caller = await requireGeminiCaller(req);
   if (!caller.ok) return caller.response;
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1/webhooks", {
+  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/webhooks", {
     headers: { "x-goog-api-key": getGeminiApiKey() },
     cache: "no-store",
   });
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   const uri = body.uri?.trim() || `${process.env.NEXT_PUBLIC_SITE_URL || "https://muel-tree.vercel.app"}/api/gemini/webhook`;
   const subscribedEvents = body.subscribedEvents?.length ? body.subscribedEvents : defaultEvents;
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1/webhooks", {
+  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/webhooks", {
     method: "POST",
     headers: {
       "content-type": "application/json",
